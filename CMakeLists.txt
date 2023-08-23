@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 set( serial_SOURCES
   src/Serial.cc
+  src/Buffer.cc
   )
 
 add_library(serial SHARED ${serial_SOURCES})
@@ -25,4 +26,3 @@ install(EXPORT serial
   NAMESPACE serial::
   DESTINATION lib/serial
   )
-  

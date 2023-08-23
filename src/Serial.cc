@@ -19,211 +19,212 @@
 #include <serial/Serial.hh>
 
 // Serial.hh definitions (start)
-
-Serial::Serial(const char *port, unsigned long baudrate)
+namespace serial
 {
-    // clean setup variable
-    setup &= ~0xff;
-
-    open(port);
-
-    if (!(setup & PORT_OPENED))
-	throw std::runtime_error("Serial(): cannot open serial port");
-
-    // ##### Control Modes #####
-    // - PARITY BIT - NOTE check to see if we need to check the parity bit on the other end of the
-    // serial comm. We will disable since this is most common and what is be used in the
-    // motivation of this class
-    tty.c_cflag &= ~(PARENB | PARODD);
-
-    // - STOP BIT -
-    // Use only one stop bit in comms
-    tty.c_cflag &= ~CSTOPB;
-
-    // - NUM BITS/BYTE -
-    // Set the number of bits per byte (most common - 8)
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;
-
-    // - HARDWARE FLOW CONTROL -
-    // Disable RST/CTS hardware flow control
-    tty.c_cflag &= ~CRTSCTS;
-
-    // - CREAD & CLOCAL -
-    // Setting CLOCAL disables modem-specific signal lines such as carrier detect. It also
-    // prevents the controlling process from getting sent a SIGHUP signal when a modem disconnect is
-    // detected, which is usually a good thing here. Setting CREAD allows us to read data (desired)
-    tty.c_cflag |= CREAD | CLOCAL;
-    setup |= CTL_MODE_SET;
-
-    // ###### LOCAL MODES #####
-    // - CANONICAL MODE -
-    // Setting canonical mode triggers input processing only when a new line character is recieved.
-    // This is mainly used for line-by-line editing since chars like backspace are used to edit
-    // the current line of text. This could cause bytes to go missing when sending raw data, so
-    // we will turn it off.
-    tty.c_lflag &= ~ICANON;
-
-    // - ECHO -
-    // If this is set, sent characters are echo'd back. This may be dependent on canonical mode, i.e.
-    // when canon is disabled, echo may do nothing (would be valiant to check)
-    tty.c_lflag &= ~ECHO;// Disable echo
-    tty.c_lflag &= ~ECHOE;// Disable erasure
-    tty.c_lflag &= ~ECHONL;// Disable new line
-    tty.c_lflag &= ~ECHOK;
-    tty.c_lflag &= ~IEXTEN;
-
-    // - Signal Characters -
-    // We disable the interpretation of signal characts (INT, QUIT, SUSP). Again, raw data only so this
-    // will be disabled
-    tty.c_lflag &= ~ISIG;
-    setup |= LOCAL_MODE_SET;
-
-    // ##### Input Modes #####
-    // - Software Flow Control -
-    // disables software flow control
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-
-    // - Byte Handling -
-    // Other byte handling fields. Disabling to keep the serial stream raw
-    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|INPCK);
-    setup |= INPUT_MODE_SET;
-
-    // ##### Output Modes ######
-    tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
-    tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
-
-    setup |= OUTPUT_MODE_SET;
-
-    setBaudrate(baudrate);
-
-    // ##### VMIN and VTIME #####
-    // Read any available data immediately
-    tty.c_cc[VTIME] = 0;
-    tty.c_cc[VMIN] = 0;
-
-
-    // ##### Save Termios #####
-    // Save tty settings and check for error
-    if (::tcsetattr(serial_port_, TCSANOW, &tty) != 0)
+    Serial::Serial(const char *port, unsigned long baudrate)
     {
-	printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
-    }
-}
+	// clean setup variable
+	setup &= ~0xff;
 
-Serial::~Serial()
-{
-    close();
-}
+	open(port);
 
-void Serial::open(const char *devFile)
-{
-    serial_port_ = ::open(devFile, O_RDWR | O_NOCTTY | O_NONBLOCK);
+	if (!(setup & PORT_OPENED))
+	    throw std::runtime_error("Serial(): cannot open serial port");
 
-    if (serial_port_ < 0)
-    {
-	std::cerr << "open() returned with : " << strerror(errno) << std::endl;
-	return;
+	// ##### Control Modes #####
+	// - PARITY BIT - NOTE check to see if we need to check the parity bit on the other end of the
+	// serial comm. We will disable since this is most common and what is be used in the
+	// motivation of this class
+	tty.c_cflag &= ~(PARENB | PARODD);
+
+	// - STOP BIT -
+	// Use only one stop bit in comms
+	tty.c_cflag &= ~CSTOPB;
+
+	// - NUM BITS/BYTE -
+	// Set the number of bits per byte (most common - 8)
+	tty.c_cflag &= ~CSIZE;
+	tty.c_cflag |= CS8;
+
+	// - HARDWARE FLOW CONTROL -
+	// Disable RST/CTS hardware flow control
+	tty.c_cflag &= ~CRTSCTS;
+
+	// - CREAD & CLOCAL -
+	// Setting CLOCAL disables modem-specific signal lines such as carrier detect. It also
+	// prevents the controlling process from getting sent a SIGHUP signal when a modem disconnect is
+	// detected, which is usually a good thing here. Setting CREAD allows us to read data (desired)
+	tty.c_cflag |= CREAD | CLOCAL;
+	setup |= CTL_MODE_SET;
+
+	// ###### LOCAL MODES #####
+	// - CANONICAL MODE -
+	// Setting canonical mode triggers input processing only when a new line character is recieved.
+	// This is mainly used for line-by-line editing since chars like backspace are used to edit
+	// the current line of text. This could cause bytes to go missing when sending raw data, so
+	// we will turn it off.
+	tty.c_lflag &= ~ICANON;
+
+	// - ECHO -
+	// If this is set, sent characters are echo'd back. This may be dependent on canonical mode, i.e.
+	// when canon is disabled, echo may do nothing (would be valiant to check)
+	tty.c_lflag &= ~ECHO;// Disable echo
+	tty.c_lflag &= ~ECHOE;// Disable erasure
+	tty.c_lflag &= ~ECHONL;// Disable new line
+	tty.c_lflag &= ~ECHOK;
+	tty.c_lflag &= ~IEXTEN;
+
+	// - Signal Characters -
+	// We disable the interpretation of signal characts (INT, QUIT, SUSP). Again, raw data only so this
+	// will be disabled
+	tty.c_lflag &= ~ISIG;
+	setup |= LOCAL_MODE_SET;
+
+	// ##### Input Modes #####
+	// - Software Flow Control -
+	// disables software flow control
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+
+	// - Byte Handling -
+	// Other byte handling fields. Disabling to keep the serial stream raw
+	tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|INPCK);
+	setup |= INPUT_MODE_SET;
+
+	// ##### Output Modes ######
+	tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+	tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
+
+	setup |= OUTPUT_MODE_SET;
+
+	setBaudrate(baudrate);
+
+	// ##### VMIN and VTIME #####
+	// Read any available data immediately
+	tty.c_cc[VTIME] = 0;
+	tty.c_cc[VMIN] = 0;
+
+
+	// ##### Save Termios #####
+	// Save tty settings and check for error
+	if (::tcsetattr(serial_port_, TCSANOW, &tty) != 0)
+	{
+	    printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+	}
     }
 
-    // Read in existing settings, and handle any error
-    // NOTE: This is important! POSIX states that the struct passed to tcsetattr()
-    // must have been initialized with a call to tcgetattr() overwise behaviour
-    // is undefined
-    if (tcgetattr(serial_port_, &tty) != 0)
+    Serial::~Serial()
     {
-	std::cerr << "tcgetattr() returned with : " << + strerror(errno) << std::endl;
-	return;
+	close();
     }
 
-    // ##### Save Termios #####
-    // Save tty settings and check for error
-    if (tcsetattr(serial_port_, TCSANOW, &tty) != 0)
+    void Serial::open(const char *devFile)
     {
-	printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+	serial_port_ = ::open(devFile, O_RDWR | O_NOCTTY | O_NONBLOCK);
+
+	if (serial_port_ < 0)
+	{
+	    std::cerr << "open() returned with : " << strerror(errno) << std::endl;
+	    return;
+	}
+
+	// Read in existing settings, and handle any error
+	// NOTE: This is important! POSIX states that the struct passed to tcsetattr()
+	// must have been initialized with a call to tcgetattr() overwise behaviour
+	// is undefined
+	if (tcgetattr(serial_port_, &tty) != 0)
+	{
+	    std::cerr << "tcgetattr() returned with : " << + strerror(errno) << std::endl;
+	    return;
+	}
+
+	// ##### Save Termios #####
+	// Save tty settings and check for error
+	if (tcsetattr(serial_port_, TCSANOW, &tty) != 0)
+	{
+	    printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+	}
+
+	setup |= PORT_OPENED;
     }
 
-    setup |= PORT_OPENED;
-}
-
-void Serial::close()
-{
-    // If the port is opened then we close it
-    if (setup & PORT_OPENED)
-	::close(serial_port_);
-}
-
-void Serial::setBaudrate(unsigned long baudrate)
-{
-
-    // TODO: Add more baudrates to support
-    switch (baudrate)
+    void Serial::close()
     {
-    case 9600:
-	baudrate = 9600;
-	break;
-    case 115200:
-	baudrate = B115200;
-	break;
-    default:
-        throw std::runtime_error("Unsupported baudrate type");
-	break;
+	// If the port is opened then we close it
+	if (setup & PORT_OPENED)
+	    ::close(serial_port_);
     }
 
-    ::cfsetspeed(&tty, baudrate);
-
-    // Verify the baudrate
-    if (cfgetispeed(&tty) == baudrate
-	&& cfgetospeed(&tty) == baudrate)
-	setup |= BAUD_RATE_SET;
-    else
-	setup &= ~BAUD_RATE_SET;
-}
-
-bool Serial::isReady()
-{
-    return (setup & PORT_READY) == PORT_READY;
-}
-
-size_t Serial::read(uint8_t *buf, size_t len, float timeOut)
-{
-    if (!isReady())
-	return -1;
-
-    using namespace std::chrono;
-    size_t bytes_read = 0;
-
-    auto start = steady_clock::now();
-    duration<float> elapsed_time;
-
-    while ((bytes_read != len) && (elapsed_time.count() < timeOut))
+    void Serial::setBaudrate(unsigned long baudrate)
     {
-    	int n = ::read(serial_port_, buf + bytes_read, len - bytes_read);
-    	if (n != 0)
-    	{
-    	    bytes_read+=n;
-    	    start = steady_clock::now();
-    	}
 
-    	elapsed_time = steady_clock::now() - start;
+	// TODO: Add more baudrates to support
+	switch (baudrate)
+	{
+	case 9600:
+	    baudrate = 9600;
+	    break;
+	case 115200:
+	    baudrate = B115200;
+	    break;
+	default:
+	    throw std::runtime_error("Unsupported baudrate type");
+	    break;
+	}
+
+	::cfsetspeed(&tty, baudrate);
+
+	// Verify the baudrate
+	if (cfgetispeed(&tty) == baudrate
+	    && cfgetospeed(&tty) == baudrate)
+	    setup |= BAUD_RATE_SET;
+	else
+	    setup &= ~BAUD_RATE_SET;
     }
 
-    return bytes_read;
-}
-
-size_t Serial::write(uint8_t *buf, size_t len)
-{
-    if (!isReady())
-	return -1;
-
-    size_t n = 0;
-
-    while (n < len)
+    bool Serial::isReady()
     {
-	n += ::write(serial_port_, buf + n, len - n);
+	return (setup & PORT_READY) == PORT_READY;
     }
 
-    return n;
-}
+    size_t Serial::read(uint8_t *buf, size_t len, float timeOut)
+    {
+	if (!isReady())
+	    return -1;
 
-// Serial.hh definitions (end)
+	using namespace std::chrono;
+	size_t bytes_read = 0;
+
+	auto start = steady_clock::now();
+	duration<float> elapsed_time;
+
+	while ((bytes_read != len) && (elapsed_time.count() < timeOut))
+	{
+	    int n = ::read(serial_port_, buf + bytes_read, len - bytes_read);
+	    if (n != 0)
+	    {
+		bytes_read+=n;
+		start = steady_clock::now();
+	    }
+
+	    elapsed_time = steady_clock::now() - start;
+	}
+
+	return bytes_read;
+    }
+
+    size_t Serial::write(uint8_t *buf, size_t len)
+    {
+	if (!isReady())
+	    return -1;
+
+	size_t n = 0;
+
+	while (n < len)
+	{
+	    n += ::write(serial_port_, buf + n, len - n);
+	}
+
+	return n;
+    }
+
+} // namepsace serial
