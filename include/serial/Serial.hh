@@ -5,6 +5,7 @@
 #include <cstddef>
 
 #include <serial/Buffer.hh>
+
 namespace serial
 {
 
@@ -36,17 +37,24 @@ namespace serial
 	// Set baud rate
 	void setBaudrate(unsigned long br);
 
-	// Read
-	size_t read(uint8_t *buf, size_t len, float timeout=10);
+	template <typename T>
+	size_t read(Buffer<T> *buf)
+	{
+	    std::lock_guard<std::mutex> lk(buf->mtx);
 
-	template<typename T>
-	size_t read(Buffer<T> &buf);
+	    return read(buf->buf, buf->size());
+	};
 
-	// Writes
-	size_t write(uint8_t *buf, size_t len);
+	template <typename T>
+	size_t write(Buffer<T> *buf)
+	{
+	    std::lock_guard<std::mutex> lk(buf->mtx);
 
-	template<typename T>
-	size_t write(Buffer<T> &buf);
+	    if (buf->buf == nullptr)
+		throw std::runtime_error("invalid buffer");
+
+	    return write(buf->buf, buf->size());
+	};
 
 	// Helpers
 	bool isReady();
@@ -55,6 +63,12 @@ namespace serial
 	void close();
 
     private:
+	// Read
+	size_t read(uint8_t *buf, size_t len, float timeout=10);
+
+	// Writes
+	size_t write(uint8_t *buf, size_t len);
+
 	// open a device file
 	void open(const char *devFile);
 
@@ -64,7 +78,7 @@ namespace serial
 	// is ready to read/write to
 	uint8_t setup;
 
-	// struct termios {
+	// struct termios
 	// 	tcflag_t c_iflag;		/* input mode flags */
 	// 	tcflag_t c_oflag;		/* output mode flags */
 	// 	tcflag_t c_cflag;		/* control mode flags */
@@ -82,7 +96,6 @@ namespace serial
 #define OUTPUT_MODE_SET  0x10
 #define LOCAL_MODE_SET   0x20
 #define PORT_READY       0x3f
-
     };
 
 } // namespace serial
