@@ -4,6 +4,8 @@
 #include <cstring>
 #include <memory>
 
+#include <iostream>
+
 namespace serial
 {
     template<typename T>
@@ -25,6 +27,11 @@ namespace serial
 	 * @brief Sets the data in the buffer
 	 */
 	void setData(T &data);
+
+	/**
+	 * @brief Sets the data in the buffer with an rvalue input
+	 */
+	void setData(T &&data);
 
 	/**
 	 * @brief Returns the size of the buffer
@@ -58,6 +65,14 @@ namespace serial
 	copy = data;
     	std::lock_guard<std::mutex> lk(mtx);
     	buf = (uint8_t *)(&copy);
+    }
+
+    template <typename T>
+    void Buffer<T>::setData(T &&data)
+    {
+	copy = std::move(data);
+	std::lock_guard<std::mutex> lk(mtx);
+	buf = (uint8_t *)(&copy);
     }
 
     template <typename T>
