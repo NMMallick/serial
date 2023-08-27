@@ -22,6 +22,12 @@ if (BUILD_EXAMPLES)
   target_link_libraries(test PUBLIC serial)
 endif()
 
+if (BUILD_TESTS)
+  find_package(Catch2 3 REQUIRED)
+  add_executable(construct_serial tests/construction.cc)
+  target_link_libraries(construct_serial PRIVATE Catch2::Catch2WithMain serial)
+endif()
+
 # TODO: Setup the install interface
 install(TARGETS serial
   EXPORT serial
