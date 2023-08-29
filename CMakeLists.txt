@@ -32,10 +32,14 @@ endif()
 install(TARGETS serial
   EXPORT serial
   LIBRARY DESTINATION lib
+  INCLUDES DESTINATION include
   )
+
+install(DIRECTORY include/serial
+  DESTINATION include)
 
 install(EXPORT serial
   FILE serialConfig.cmake
   NAMESPACE serial::
-  DESTINATION lib/serial
+  DESTINATION cmake
   )
